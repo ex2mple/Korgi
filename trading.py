@@ -23,7 +23,7 @@ class Trading(discord.Cog):
     async def balance(self, ctx):
         """Выведет пользователю баланс его кошелька."""
         author, guild = ctx.author, ctx.guild
-        connection, cursor = self.connect(), self.connect()
+        connection, cursor = await self.connect()
 
         try:
             await cursor.execute(f'SELECT cash FROM users WHERE user_id = ? AND guild = ?',
