@@ -1,14 +1,10 @@
-import os
+import os, discord, assets
 from os.path import join, dirname
 from dotenv import load_dotenv
-import discord
-import aiosqlite as sql
-import assets
+from discord.ext import commands
 
 load_dotenv(join(dirname(__file__), '.env'))
 TOKEN = os.environ.get("TOKEN")
-
-
 
 bot = discord.Bot(debug_guilds=[921377212500967444, 771736345437274132])
 
@@ -47,6 +43,7 @@ async def on_ready():
                                  guild INTEGER UNIQUE NOT NULL,
                                  exchange INTEGER DEFAULT NULL,
                                  exchange_info INTEGER DEFAULT NULL,
+                                 forex INTEGER DEFAULT NULL,
                                  FOREIGN KEY (guild) REFERENCES guilds (guild_id) ON DELETE CASCADE
                                  )''')
 
@@ -78,6 +75,14 @@ async def on_guild_join(guild: discord.Guild):
     finally:
         await cursor.close()
         await connection.close()
+
+@bot.event
+async def on_application_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        await ctx.respond(error, ephemeral=True)
+    else:
+        raise error
+
 
 @bot.event
 async def on_guild_remove(guild: discord.Guild):
