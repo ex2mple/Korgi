@@ -3,7 +3,7 @@ from os.path import join, dirname
 from dotenv import load_dotenv
 import discord
 import aiosqlite as sql
-
+import assets
 
 load_dotenv(join(dirname(__file__), '.env'))
 TOKEN = os.environ.get("TOKEN")
@@ -15,10 +15,7 @@ bot = discord.Bot(debug_guilds=[921377212500967444, 771736345437274132])
 
 @bot.event
 async def on_ready():
-    connection = await sql.connect('general.db')
-    await connection.execute('PRAGMA foreign_keys = ON;')
-    cursor = await connection.cursor()
-
+    connection, cursor = await assets.connect()
     try:
 
         await cursor.execute('''CREATE TABLE if not exists guilds(
@@ -72,10 +69,7 @@ async def on_ready():
 
 @bot.event
 async def on_guild_join(guild: discord.Guild):
-    connection = await sql.connect('general.db')
-    await connection.execute('PRAGMA foreign_keys = ON;')
-    cursor = await connection.cursor()
-
+    connection, cursor = await assets.connect()
     try:
         await cursor.execute(f'''INSERT INTO guilds (name, guild_id) VALUES (?, ?)''', (guild.name, guild.id))
         await connection.commit()
@@ -87,10 +81,7 @@ async def on_guild_join(guild: discord.Guild):
 
 @bot.event
 async def on_guild_remove(guild: discord.Guild):
-    connection = await sql.connect('general.db')
-    await connection.execute('PRAGMA foreign_keys = ON;')
-    cursor = await connection.cursor()
-
+    connection, cursor = await assets.connect()
     try:
         await cursor.execute('''DELETE FROM guilds WHERE guild_id=?''', (guild.id, ))
         await connection.commit()
@@ -103,10 +94,7 @@ async def on_guild_remove(guild: discord.Guild):
 @bot.slash_command()
 async def test_guild_join(ctx):
     if await bot.is_owner(ctx.author):
-        connection = await sql.connect('general.db')
-        await connection.execute('PRAGMA foreign_keys = ON;')
-        cursor = await connection.cursor()
-
+        connection, cursor = await assets.connect()
         try:
             await cursor.execute(f'''INSERT INTO guilds (name, guild_id) VALUES (?, ?)''', (ctx.guild.name, ctx.guild.id))
             await connection.commit()
@@ -119,10 +107,7 @@ async def test_guild_join(ctx):
 @bot.slash_command()
 async def test_guild_remove(ctx):
     if await bot.is_owner(ctx.author):
-        connection = await sql.connect('general.db')
-        await connection.execute('PRAGMA foreign_keys = ON;')
-        cursor = await connection.cursor()
-
+        connection, cursor = await assets.connect()
         try:
             await cursor.execute('''DELETE FROM guilds WHERE guild_id=?''', (ctx.guild.id, ))
             await connection.commit()
