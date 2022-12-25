@@ -13,7 +13,6 @@ bot = discord.Bot(debug_guilds=[921377212500967444, 771736345437274132])
 async def on_ready():
     connection, cursor = await assets.connect()
     try:
-
         await cursor.execute('''CREATE TABLE if not exists guilds(
                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
                                  name TEXT NOT NULL,
@@ -43,7 +42,7 @@ async def on_ready():
                                  guild INTEGER UNIQUE NOT NULL,
                                  exchange INTEGER DEFAULT NULL,
                                  exchange_info INTEGER DEFAULT NULL,
-                                 forex INTEGER DEFAULT NULL,
+                                 crash INTEGER DEFAULT NULL,
                                  FOREIGN KEY (guild) REFERENCES guilds (guild_id) ON DELETE CASCADE
                                  )''')
 
@@ -53,6 +52,14 @@ async def on_ready():
                                  guild INTEGER NOT NULL,
                                  name TEXT NOT NULL,
                                  amount INTEGER DEFAULT 0
+                                 )''')
+
+        await cursor.execute('''CREATE TABLE if not exists games(
+                                 id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                 guild INTEGER NOT NULL,
+                                 user INTEGER NOT NULL,
+                                 bet INTEGER NOT NULL,
+                                 quotient REAL NOT NULL
                                  )''')
 
         await connection.commit()
@@ -69,6 +76,7 @@ async def on_guild_join(guild: discord.Guild):
     connection, cursor = await assets.connect()
     try:
         await cursor.execute(f'''INSERT INTO guilds (name, guild_id) VALUES (?, ?)''', (guild.name, guild.id))
+        await cursor.execute(f'''INSERT INTO settings (guild) VALUES (?)''', (guild.id, ))
         await connection.commit()
     except Exception as err:
         print('Ошибка в работе кода: ', err)
@@ -97,30 +105,32 @@ async def on_guild_remove(guild: discord.Guild):
         await connection.close()
 
 @bot.slash_command()
+@commands.is_owner()
 async def test_guild_join(ctx):
-    if await bot.is_owner(ctx.author):
-        connection, cursor = await assets.connect()
-        try:
-            await cursor.execute(f'''INSERT INTO guilds (name, guild_id) VALUES (?, ?)''', (ctx.guild.name, ctx.guild.id))
-            await connection.commit()
-        except Exception as err:
-            print('Ошибка в работе кода: ', err)
-        finally:
-            await cursor.close()
-            await connection.close()
+    connection, cursor = await assets.connect()
+    try:
+        await cursor.execute(f'''INSERT INTO guilds (name, guild_id) VALUES (?, ?)''', (ctx.guild.name, ctx.guild.id))
+        await cursor.execute(f'''INSERT INTO settings (guild) VALUES (?)''', (ctx.guild.id,))
+        await connection.commit()
+    except Exception as err:
+        print('Ошибка в работе кода: ', err)
+    finally:
+        await cursor.close()
+        await connection.close()
 
 @bot.slash_command()
+@commands.is_owner()
 async def test_guild_remove(ctx):
-    if await bot.is_owner(ctx.author):
-        connection, cursor = await assets.connect()
-        try:
-            await cursor.execute('''DELETE FROM guilds WHERE guild_id=?''', (ctx.guild.id, ))
-            await connection.commit()
-        except Exception as err:
-            print('Ошибка в работе кода: ', err)
-        finally:
-            await cursor.close()
-            await connection.close()
+    connection, cursor = await assets.connect()
+    try:
+        await cursor.execute('''DELETE FROM guilds WHERE guild_id=?''', (ctx.guild.id, ))
+        await connection.commit()
+    except Exception as err:
+        print('Ошибка в работе кода: ', err)
+    finally:
+        await cursor.close()
+        await connection.close()
+
 
 cogs_list = ['trading']
 for cog in cogs_list:
