@@ -132,7 +132,7 @@ async def test_guild_remove(ctx):
         await connection.close()
 
 
-cogs_list = ['trading']
+cogs_list = ['bank', 'crash']
 for cog in cogs_list:
     bot.load_extension(f'{cog}')
 
